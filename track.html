@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Order — Emmanice Essentials</title>
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #F5F2ED;
+      --white:    #FFFFFF;
+      --soft:     #EFECE6;
+      --charcoal: #1A1612;
+      --mid:      #5A5248;
+      --light:    #9A9288;
+      --border:   #D8D2C8;
+      --purple:   #1A1612;
+      --purple2:  #2E2820;
+      --purple-bg:#EFECE6;
+      --purple3:  #0E0C09;
+      --accent:   #C8A96E;
+      --charcoal: #1A1612;
+      --green:    #2D7A4F;
+      --green-bg: #F0FBF5;
+      --green-border: #A8DFC0;
+      --yellow:   #B07D00;
+      --yellow-bg:#FFF8E6;
+      --blue:     #1A5FA8;
+      --blue-bg:  #EBF3FF;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Jost',sans-serif; background:var(--bg); color:var(--charcoal); min-height:100vh; }
+
+    nav {
+      position:sticky; top:0; z-index:50; height:60px;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:0 5%; background:#181818; border-bottom:1px solid var(--border);
+      box-shadow:0 1px 8px rgba(0,0,0,0.3);
+    }
+    .nav-left { display:flex; align-items:center; gap:14px; }
+    .back-btn { color:var(--mid); text-decoration:none; font-size:13px; font-weight:500; display:flex; align-items:center; gap:5px; transition:color 0.2s; }
+    .back-btn:hover { color:var(--purple); }
+    .nav-logo {
+      font-family:'Cormorant Garamond',serif;
+      font-size:19px; color:var(--charcoal);
+      font-style:italic; font-weight:600;
+    }
+    .nav-logo span { color:var(--purple); font-style:normal; }
+
+    /* HERO */
+    .track-hero {
+      background:var(--white); border-bottom:1px solid var(--border);
+      padding:52px 5% 44px; text-align:center;
+    }
+    .track-hero .eyebrow {
+      font-size:10px; font-weight:700; letter-spacing:3.5px;
+      text-transform:uppercase; color:var(--purple);
+      margin-bottom:14px; display:block;
+    }
+    .track-hero h1 {
+      font-family:'Cormorant Garamond',serif;
+      font-size:clamp(30px,5vw,50px);
+      color:var(--charcoal); margin-bottom:10px; font-weight:700;
+    }
+    .track-hero h1 em { color:var(--purple); font-style:italic; }
+    .track-hero p { color:var(--mid); font-size:15px; max-width:400px; margin:0 auto 32px; line-height:1.7; font-weight:300; }
+
+    /* SEARCH */
+    .search-wrap {
+      display:flex; gap:10px; max-width:460px;
+      margin:0 auto; padding:0 5%;
+    }
+    .search-wrap input {
+      flex:1; padding:13px 18px; background:var(--bg);
+      border:1.5px solid var(--border); border-radius:5px;
+      font-family:'Jost',sans-serif; font-size:14px;
+      color:var(--charcoal); outline:none; transition:border-color 0.2s;
+    }
+    .search-wrap input:focus { border-color:var(--purple); background:var(--white); }
+    .search-wrap input::placeholder { color:var(--light); }
+    .search-btn {
+      background:var(--accent); color:#fff; border:none;
+      padding:13px 22px; border-radius:5px;
+      font-family:'Jost',sans-serif; font-size:14px; font-weight:600;
+      cursor:pointer; transition:background 0.2s; white-space:nowrap;
+      letter-spacing:0.3px;
+    }
+    .search-btn:hover { background:var(--purple2); }
+
+    /* RESULTS */
+    .results { max-width:600px; margin:36px auto 80px; padding:0 5%; }
+    .results-label { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--mid); margin-bottom:16px; }
+
+    /* ORDER CARD */
+    .order-card {
+      background:var(--white); border:1px solid var(--border);
+      border-radius:6px; padding:20px; margin-bottom:16px;
+      box-shadow:0 2px 12px rgba(0,0,0,0.04);
+    }
+    .card-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; gap:10px; }
+    .order-id { font-size:10px; color:var(--light); margin-bottom:4px; font-weight:700; letter-spacing:0.5px; }
+    .order-time { font-size:12px; color:var(--light); }
+
+    .badge { padding:5px 14px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; flex-shrink:0; }
+    .b-Pending   { background:var(--yellow-bg); color:var(--yellow); }
+    .b-Preparing { background:var(--blue-bg);   color:var(--blue); }
+    .b-Completed { background:var(--green-bg);  color:var(--green); }
+    .b-Cancelled { background:var(--purple-bg);   color:var(--purple); }
+
+    /* PROGRESS */
+    .progress-wrap { margin-bottom:20px; }
+    .progress-steps { display:flex; align-items:center; margin-bottom:8px; }
+    .step { display:flex; flex-direction:column; align-items:center; flex:1; position:relative; }
+    .step-dot {
+      width:32px; height:32px; border-radius:50%;
+      border:2px solid var(--border); background:var(--bg);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; z-index:1; transition:all 0.3s;
+    }
+    .step.done .step-dot   { background:var(--green);  border-color:var(--green); }
+    .step.active .step-dot { background:var(--purple3);    border-color:var(--purple3); animation:pulse 1.5s ease-in-out infinite; }
+    .step.cancelled .step-dot { background:var(--light); border-color:var(--border); }
+    @keyframes pulse {
+      0%,100%{box-shadow:0 0 0 0 rgba(96,48,160,0.3);}
+      50%{box-shadow:0 0 0 8px rgba(96,48,160,0);}
+    }
+    .step-line { flex:1; height:2px; background:var(--border); transition:background 0.3s; }
+    .step-line.done { background:var(--green); }
+    .step-labels { display:flex; justify-content:space-between; }
+    .step-lbl { font-size:11px; color:var(--light); text-align:center; flex:1; font-weight:500; }
+    .step-lbl.active { color:var(--purple3); font-weight:700; }
+    .step-lbl.done   { color:var(--green); font-weight:600; }
+    .step-lbl.cancelled { color:var(--light); }
+
+    /* ITEMS */
+    .items-list { border-top:1px solid var(--border); padding-top:14px; margin-top:4px; }
+    .item-row { display:flex; justify-content:space-between; font-size:13px; color:var(--mid); padding:5px 0; font-weight:300; }
+    .item-row span:last-child { font-weight:600; color:var(--charcoal); }
+    .total-row { display:flex; justify-content:space-between; font-size:15px; font-weight:700; padding-top:12px; margin-top:8px; border-top:1px solid var(--border); }
+    .total-row span:last-child { color:var(--purple3); }
+    .order-meta { font-size:12px; color:var(--light); margin-top:6px; }
+
+    /* STATES */
+    .state-msg { text-align:center; padding:50px 20px; color:var(--mid); font-size:15px; }
+    .state-msg .ico { font-size:40px; margin-bottom:12px; display:block; }
+
+    /* FOOTER */
+    footer {
+      background:#1A1612; padding:28px 5%;
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:12px;
+    }
+    .footer-logo {
+      font-family:'Cormorant Garamond',serif;
+      font-size:17px; color:#fff;
+      font-style:italic; font-weight:600;
+    }
+    .footer-logo span { color:var(--accent); font-style:normal; }
+    footer p { font-size:12px; color:rgba(255,255,255,0.35); }
+    .footer-links { display:flex; gap:20px; }
+    .footer-links a { color:rgba(255,255,255,0.4); text-decoration:none; font-size:12px; transition:color 0.2s; }
+    .footer-links a:hover { color:#fff; }
+
+    @media(max-width:500px) {
+      .search-wrap { flex-direction:column; }
+      footer { flex-direction:column; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-left">
+      <a href="index.html" class="back-btn">← Home</a>
+      <a href="index.html" class="nav-logo">House of <span>Tayor</span></a>
+    </div>
+  </nav>
+
+  <div class="track-hero">
+    <span class="eyebrow">Order Tracking</span>
+    <h1>Track Your <em>Order</em></h1>
+    <p>Enter the phone number you used when placing your order to see its live status.</p>
+
+    <div class="search-wrap">
+      <input type="tel" id="phoneInput" placeholder="e.g. 09025437643" maxlength="14">
+      <button class="search-btn" onclick="trackOrder()">Track Order</button>
+    </div>
+  </div>
+
+  <div class="results" id="resultsWrap">
+    <div class="state-msg">
+      <span class="ico">💍</span>
+      <p>Enter your phone number above to see your orders</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">House of <span>Tayor</span></div>
+    <p>© 2026 Emmanice Essentials. Nigeria.</p>
+    <div class="footer-links">
+      <a href="customer.html">Shop Now</a>
+      <a href="index.html#contact">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    // Track orders via Firestore REST API — works with public read rules, no SDK needed
+    const PROJ   = 'mindforge-9777c';
+    const APIKEY  = 'AIzaSyBQp-Lm-p-An0MbF4qCj3FU2satT84sQcw';
+    const steps  = ['Pending','Preparing','Completed'];
+
+    function parseField(f) {
+      if (!f) return '';
+      if (f.stringValue  !== undefined) return f.stringValue;
+      if (f.integerValue !== undefined) return Number(f.integerValue);
+      if (f.doubleValue  !== undefined) return Number(f.doubleValue);
+      if (f.booleanValue !== undefined) return f.booleanValue;
+      if (f.timestampValue !== undefined) return f.timestampValue; // ISO string
+      if (f.arrayValue   !== undefined) {
+        return (f.arrayValue.values || []).map(v => {
+          if (v.mapValue) {
+            const mf = v.mapValue.fields || {};
+            return {
+              name:  parseField(mf.name),
+              qty:   parseField(mf.qty),
+              price: parseField(mf.price),
+            };
+          }
+          return parseField(v);
+        });
+      }
+      return '';
+    }
+
+    function parseOrderDoc(doc) {
+      const f = doc.fields || {};
+      return {
+        id:           doc.name.split('/').pop(),
+        customerName: parseField(f.customerName),
+        phone:        parseField(f.phone),
+        address:      parseField(f.address),
+        orderType:    parseField(f.orderType),
+        status:       parseField(f.status) || 'Pending',
+        total:        parseField(f.total),
+        createdAt:    parseField(f.createdAt), // ISO string from timestampValue
+        items:        parseField(f.items) || [],
+      };
+    }
+
+    function formatTime(isoStr) {
+      if (!isoStr) return 'Just now';
+      try {
+        return new Date(isoStr).toLocaleString('en-NG', {dateStyle:'medium', timeStyle:'short'});
+      } catch(e) { return 'Just now'; }
+    }
+
+    function stepIndex(s) { return s === 'Cancelled' ? -1 : steps.indexOf(s); }
+
+    function buildProgress(status) {
+      const cur = stepIndex(status), cancelled = status === 'Cancelled';
+      const icons = ['\u23F0','\u2702\uFE0F','\u2705'];
+      const dots = steps.map((s, i) => {
+        const cls = cancelled ? 'cancelled' : i < cur ? 'done' : i === cur ? 'active' : '';
+        const line = i < steps.length - 1
+          ? `<div class="step-line ${i < cur && !cancelled ? 'done' : ''}"></div>` : '';
+        return `<div class="step ${cls}"><div class="step-dot">${icons[i]}</div></div>${line}`;
+      }).join('');
+      const lbls = steps.map((s, i) => {
+        const cls = cancelled ? 'cancelled' : i < cur ? 'done' : i === cur ? 'active' : '';
+        return `<span class="step-lbl ${cls}">${s}</span>`;
+      }).join('');
+      return `<div class="progress-wrap"><div class="progress-steps">${dots}</div><div class="step-labels">${lbls}</div></div>`;
+    }
+
+    function buildCard(o) {
+      const time = formatTime(o.createdAt);
+      const rows = o.items.map(i =>
+        `<div class="item-row"><span>${i.qty}\u00D7 ${i.name}</span><span>\u20A6${(Number(i.price) * Number(i.qty)).toLocaleString()}</span></div>`
+      ).join('');
+      return `<div class="order-card">
+        <div class="card-head">
+          <div>
+            <div class="order-id">ORDER #${o.id.slice(-6).toUpperCase()}</div>
+            <div class="order-time">${time}</div>
+          </div>
+          <span class="badge b-${o.status}">${o.status}</span>
+        </div>
+        ${buildProgress(o.status)}
+        <div class="items-list">
+          ${rows}
+          <div class="total-row"><span>Total</span><span>\u20A6${Number(o.total).toLocaleString()}</span></div>
+          <div class="order-meta">${o.orderType || ''} · ${o.address || ''}</div>
+        </div>
+      </div>`;
+    }
+
+    async function fetchJSON(url, opts={}, timeoutMs=8000) {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res  = await fetch(url, {...opts, signal: ctrl.signal});
+        clearTimeout(tid);
+        const data = await res.json();
+        if (!res.ok) {
+          // Log full Firestore error for debugging
+          console.error('Firestore error:', JSON.stringify(data));
+          throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
+        }
+        return data;
+      } catch(e) {
+        clearTimeout(tid);
+        throw e;
+      }
+    }
+
+    async function fetchWithRetry(url, opts={}, maxAttempts=3, timeoutMs=8000) {
+      let lastErr;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          return await fetchJSON(url, opts, timeoutMs);
+        } catch(e) {
+          lastErr = e;
+          if (attempt < maxAttempts) await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+      }
+      throw lastErr;
+    }
+
+    window.trackOrder = async function() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      const wrap  = document.getElementById('resultsWrap');
+
+      if (!phone) {
+        wrap.innerHTML = '<div class="state-msg"><span class="ico">\u26A0\uFE0F</span><p>Please enter your phone number</p></div>';
+        return;
+      }
+
+      wrap.innerHTML = '<div class="state-msg"><span class="ico">\uD83D\uDD0D</span><p>Looking up your orders...</p></div>';
+
+      // Firestore REST structured query — filter by phone
+      const url = `https://firestore.googleapis.com/v1/projects/${PROJ}/databases/(default)/documents:runQuery?key=${APIKEY}`;
+      // No orderBy in query — Firestore needs a composite index for where+orderBy
+      // on different fields. Sort client-side after fetch instead.
+      const body = {
+        structuredQuery: {
+          from: [{ collectionId: 'orders' }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'phone' },
+              op: 'EQUAL',
+              value: { stringValue: phone }
+            }
+          },
+          limit: 20
+        }
+      };
+
+      try {
+        const results = await fetchWithRetry(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        // REST runQuery returns array; each item has .document if matched
+        const orders = (results || [])
+          .filter(r => r.document)
+          .map(r => parseOrderDoc(r.document));
+
+        if (!orders.length) {
+          wrap.innerHTML = '<div class="state-msg"><span class="ico">\uD83D\uDE15</span><p>No orders found for this number.<br><small style="font-size:12px;display:block;margin-top:6px;color:var(--light);">Make sure you enter the exact number used when ordering.</small></p></div>';
+          return;
+        }
+
+        wrap.innerHTML = `<p class="results-label">${orders.length} order${orders.length > 1 ? 's' : ''} found</p>` + orders.map(buildCard).join('');
+      } catch(e) {
+        console.error('Track error:', e);
+        wrap.innerHTML = '<div class="state-msg"><span class="ico">\u274C</span><p>Could not load orders. Please check your connection and try again.</p></div>';
+      }
+    };
+
+    document.getElementById('phoneInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') trackOrder();
+    });
+  </script>
+</body>
+</html>
